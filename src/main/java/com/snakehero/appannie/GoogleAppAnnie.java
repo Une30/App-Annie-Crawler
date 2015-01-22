@@ -11,9 +11,10 @@ import org.jsoup.select.Elements;
 
 import com.snakehero.appannie.ddl.AnnieApp;
 import com.snakehero.appannie.ddl.AnnieBillboard;
+import com.snakehero.appannie.ddl.AnnieCategory;
+import com.snakehero.appannie.ddl.AnnieCategoryConfig;
 import com.snakehero.appannie.ddl.AnnieCountryConfig;
 import com.snakehero.appannie.service.AnnieService;
-
 
 /**
  * Help you to get AppAnnie Google BillBoard
@@ -38,18 +39,39 @@ public class GoogleAppAnnie {
 	private Document moreDoc;
 
 	private String countryCode;
+	private static AnnieCategory annieCategory;
 
-	public GoogleAppAnnie(String countryCode) {
-		this.countryCode = countryCode;
-		String countryName = AnnieCountryConfig.getCountryNameByCode(countryCode);
-		this.topUrl = AnnieService.getGoogleTopFirstUrl(countryName);
+	
+	public static GoogleAppAnnie build(String countryCode){
+		return build(countryCode,"ALL");
 	}
+	
+	public static GoogleAppAnnie build(String countryCode,String categoryName){
+		GoogleAppAnnie instance = new GoogleAppAnnie();
+		instance.countryCode = countryCode;
+		String countryName = AnnieCountryConfig.getCountryNameByCode(countryCode);
+
+		instance.annieCategory = AnnieCategoryConfig.getCategory(categoryName);
+		instance.topUrl = AnnieService.getGoogleTopFirstUrl(countryName,annieCategory);
+		return instance;
+	}
+	
+//	public GoogleAppAnnie(String countryCode,String categoryName) {
+//		this.countryCode = countryCode;
+//		String countryName = AnnieCountryConfig.getCountryNameByCode(countryCode);
+//		
+//		this.annieCategory = AnnieCategoryConfig.getCategory(categoryName.toUpperCase());
+//		if(this.annieCategory == null){
+//			throws new Exception("");
+//		}
+//		this.topUrl = AnnieService.getGoogleTopFirstUrl(countryName);
+//	}
 
 	public List<AnnieApp> getTopFree100() {
 		return firstGet(topUrl, AnnieBillboard.TOP_FREE);
 	}
 
-	public List<AnnieApp> getTopFreeMore() {
+	private List<AnnieApp> getTopFreeMore() {
 		return moreGet(moreUrl, AnnieBillboard.TOP_FREE);
 	}
 
@@ -71,7 +93,7 @@ public class GoogleAppAnnie {
 		return firstGet(topUrl, AnnieBillboard.NEW_FREE);
 	}
 
-	public List<AnnieApp> getNewFreeMore() {
+	private List<AnnieApp> getNewFreeMore() {
 		return moreGet(moreUrl, AnnieBillboard.NEW_FREE);
 	}
 
@@ -104,6 +126,7 @@ public class GoogleAppAnnie {
 				annieApps = AnnieService.extractAnnieApp(els, billBoard, this.countryCode);
 			}
 		} catch (Exception e) {
+			//logger.error("extractAnnieApp error", e);
 			// TODO
 			e.printStackTrace();
 		}
@@ -139,6 +162,7 @@ public class GoogleAppAnnie {
 					annieApps = AnnieService.extractAnnieApp(els, billBoard, this.countryCode);
 				}
 			} catch (Exception e) {
+				//logger.error("extractAnnieApp ajax error", e);
 				// TODO
 				e.printStackTrace();
 			}
@@ -149,7 +173,8 @@ public class GoogleAppAnnie {
 
 
 	public static void main(String[] args) {
-		List<AnnieApp> appList = new GoogleAppAnnie("IN").getAllNewFree();
+		GoogleAppAnnie annie = GoogleAppAnnie.build("IN");
+		List<AnnieApp> appList = annie.getAllNewFree();
 		System.out.println(appList.size());
 		for (AnnieApp app : appList) {
 			System.out.println(app.getPackageName());

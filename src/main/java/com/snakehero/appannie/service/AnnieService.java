@@ -3,6 +3,7 @@ package com.snakehero.appannie.service;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,9 +18,11 @@ import org.jsoup.select.Elements;
 
 import com.snakehero.appannie.ddl.AnnieApp;
 import com.snakehero.appannie.ddl.AnnieBillboard;
+import com.snakehero.appannie.ddl.AnnieCategory;
 
 public class AnnieService {
-	private final static String GOOGLE_TOP_TPL = "http://www.appannie.com/apps/google-play/top/%s/overall/";
+	
+	private final static String GOOGLE_TOP_TPL = "http://www.appannie.com/apps/google-play/top/%s/%s/";
 	public final static String GOOGLE_TOP_MORE_TPL = "http://www.appannie.com%s?p=2-&h=23&iap=undefined";
 	private final static String tdTemplate = "td:nth-child(%d)";
 	private final static String infoQuery = ".main-info .oneline-info a";
@@ -34,18 +37,21 @@ public class AnnieService {
 	 */
 	public static String httpGet(String url,boolean isAjax) {
 		String body = null;
+		//logger.info("Get "+url);
 		try {
-			HttpRequest request = HttpRequest.get(url).timeout(2000);
+			HttpRequest request = HttpRequest.get(url).timeout(5000);
 			if(isAjax){
 				request.header("X-Requested-With", "XMLHttpRequest");
 			}
 			request.open();
 			SocketHttpConnection httpConnection = (SocketHttpConnection) request.httpConnection();
 			Socket socket = httpConnection.getSocket();
-			socket.setSoTimeout(3000);
+			socket.setSoTimeout(30000);
 			HttpResponse response = request.send();
 			body = response.bodyText();
 		} catch (Exception e) {
+			//logger.error("Get error:"+url,e);
+			// TODO
 			e.printStackTrace();
 		}
 
@@ -139,11 +145,12 @@ public class AnnieService {
 	 * Constructs first page url of a country's Google-Top-BillBoard
 	 * 
 	 * @param countryName
+	 * @param annieCategory 
 	 * @return the first page url string
 	 * 
 	 * @see ddl.AnnieCountryConfig
 	 */
-	public static String getGoogleTopFirstUrl(String countryName) {
-		return String.format(GOOGLE_TOP_TPL, countryName);
+	public static String getGoogleTopFirstUrl(String countryName, AnnieCategory annieCategory) {
+		return String.format(GOOGLE_TOP_TPL, countryName,annieCategory.getTag());
 	}
 }
