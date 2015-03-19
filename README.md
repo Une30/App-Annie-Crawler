@@ -11,6 +11,7 @@ Usage:
 		*/
 		GoogleAppAnnie annie = GoogleAppAnnie.build("IN","GAME");
 		
-		List<AnnieApp> appList = annie.getAllNewFree();
+		List<AnnieApp> newAppList = annie.getNewFree(100);
+		List<AnnieApp> topAppList = annie.getTopFree(100);
 		
 ```

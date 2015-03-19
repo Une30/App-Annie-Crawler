@@ -3,7 +3,6 @@ package com.snakehero.appannie.service;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,32 +14,48 @@ import jodd.util.StringUtil;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.snakehero.appannie.ddl.AnnieApp;
 import com.snakehero.appannie.ddl.AnnieBillboard;
 import com.snakehero.appannie.ddl.AnnieCategory;
 
 public class AnnieService {
+	private static final Logger logger = LoggerFactory.getLogger(AnnieService.class);
+
+	private final static String GP_NAME = "google-play";
+	private final static String GP_NAME_NEW = "gp";
+
+	// if GP_NAME not work ,use GP_NAME_NEW instead by setting useGpNewName=true,otherwise false
+	private static boolean useGpNewName = false;
+	private final static String GP = useGpNewName ? GP_NAME_NEW : GP_NAME;
+	private final static String GOOGLE_TOP_TPL = "http://www.appannie.com/apps/" + GP + "/top/%s/%s/";
 	
-	private final static String GOOGLE_TOP_TPL = "http://www.appannie.com/apps/google-play/top/%s/%s/";
 	public final static String GOOGLE_TOP_MORE_TPL = "http://www.appannie.com%s?p=2-&h=23&iap=undefined";
+
 	private final static String tdTemplate = "td:nth-child(%d)";
 	private final static String infoQuery = ".main-info .oneline-info a";
-	private final static Pattern packageRegex = Pattern.compile("/apps/google-play/app/(.*)/");
+	
+	private final static Pattern packageRegex = Pattern.compile("/apps/(gp|google-play){1}/app/(.*)/");
+
 	private final static Pattern nextPageRegex = Pattern.compile("pageVal.data_url\\s?=\\s?'(.*)'", Pattern.MULTILINE);
 
 	/**
-	 * Simple Http request of get method wrapping jodd.http 
-	 * @param url the url need to request
-	 * @param isAjax true if it's a ajax request; Otherwise ,false
+	 * Simple Http request of get method wrapping jodd.http
+	 * 
+	 * @param url
+	 *            the url need to request
+	 * @param isAjax
+	 *            true if it's a ajax request; Otherwise ,false
 	 * @return response string
 	 */
-	public static String httpGet(String url,boolean isAjax) {
+	public static String httpGet(String url, boolean isAjax) {
 		String body = null;
-		//logger.info("Get "+url);
+		logger.info("Get " + url);
 		try {
 			HttpRequest request = HttpRequest.get(url).timeout(5000);
-			if(isAjax){
+			if (isAjax) {
 				request.header("X-Requested-With", "XMLHttpRequest");
 			}
 			request.open();
@@ -50,23 +65,26 @@ public class AnnieService {
 			HttpResponse response = request.send();
 			body = response.bodyText();
 		} catch (Exception e) {
-			//logger.error("Get error:"+url,e);
+			// logger.error("Get error:"+url,e);
 			// TODO
 			e.printStackTrace();
 		}
 
 		return body;
 	}
-	
+
 	/**
 	 * extract a list of app from tr elements
 	 * 
-	 * @param trEls The core tr elements of html which include app data
-	 * @param billBoard Type of AnnieBillboard
-	 * @param countryCode Code of country (e.g. IN)
+	 * @param trEls
+	 *            The core tr elements of html which include app data
+	 * @param billBoard
+	 *            Type of AnnieBillboard
+	 * @param countryCode
+	 *            Code of country (e.g. IN)
 	 * @return list of AnnieApp
 	 * 
-	 * @see AnnieBillboard 
+	 * @see AnnieBillboard
 	 */
 	public static List<AnnieApp> extractAnnieApp(Elements trEls, AnnieBillboard billBoard, String countryCode) {
 		List<AnnieApp> annieApps = new ArrayList<AnnieApp>();
@@ -101,21 +119,24 @@ public class AnnieService {
 	/**
 	 * extract packageName from a url
 	 * 
-	 * @param href the string of a link
+	 * @param href
+	 *            the string of a link
 	 * @return the packageName string
 	 */
 	public static String extractPackageName(String href) {
 		Matcher m = packageRegex.matcher(href);
 		if (m.matches()) {
-			return m.group(1);
+			return m.group(2);
 		}
 		return null;
 	}
 
 	/**
 	 * extract next page url from html
-	 * @param html the html page string
-	 * @return  next page url string
+	 * 
+	 * @param html
+	 *            the html page string
+	 * @return next page url string
 	 */
 	public static String extractNextPageUrl(String html) {
 		Matcher m = nextPageRegex.matcher(html);
@@ -127,7 +148,9 @@ public class AnnieService {
 
 	/**
 	 * get moreUrl (the second page url) from document of annie html page
-	 * @param doc the document parse by Jsoup
+	 * 
+	 * @param doc
+	 *            the document parse by Jsoup
 	 * @return the second page url string
 	 */
 	public static String getMoreUrl(Document doc) {
@@ -137,7 +160,7 @@ public class AnnieService {
 		if (!StringUtil.isEmpty(nextUrlPath)) {
 			moreUrl = String.format(GOOGLE_TOP_MORE_TPL, nextUrlPath);
 		}
-		
+
 		return moreUrl;
 	}
 
@@ -145,12 +168,12 @@ public class AnnieService {
 	 * Constructs first page url of a country's Google-Top-BillBoard
 	 * 
 	 * @param countryName
-	 * @param annieCategory 
+	 * @param annieCategory
 	 * @return the first page url string
 	 * 
 	 * @see ddl.AnnieCountryConfig
 	 */
 	public static String getGoogleTopFirstUrl(String countryName, AnnieCategory annieCategory) {
-		return String.format(GOOGLE_TOP_TPL, countryName,annieCategory.getTag());
+		return String.format(GOOGLE_TOP_TPL, countryName, annieCategory.getTag());
 	}
 }

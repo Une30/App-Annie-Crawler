@@ -9,7 +9,7 @@ import com.snakehero.appannie.ddl.AnnieApp;
 public class GoogleAppAnnieTest {
 	@Test
 	public void testGoogleAppAnnie(){
-		List<AnnieApp> appList = GoogleAppAnnie.build("IN").getAllNewFree();
+		List<AnnieApp> appList = GoogleAppAnnie.build("IN").getNewFree(100);
 		System.out.println(appList.size());
 		for (AnnieApp app : appList) {
 			System.out.println(app.getPackageName());

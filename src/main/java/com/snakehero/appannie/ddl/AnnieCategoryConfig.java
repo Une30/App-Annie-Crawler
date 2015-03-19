@@ -68,7 +68,10 @@ public class AnnieCategoryConfig {
 	}
 	
 	public static AnnieCategory getCategory(String code){
-		return ANNIE_CATEGORY_MAP.get(code.toUpperCase());
+		AnnieCategory v = ANNIE_CATEGORY_MAP.get(code.toUpperCase());
+		if(v == null){
+			v = ANNIE_CATEGORY_MAP.get("ALL");//default
+		}
+		return v;
 	}
-	
 }
