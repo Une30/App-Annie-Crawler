@@ -1,6 +1,6 @@
 # App-Annie-BillBoard
 
-A simple Java web page extract tool to get billBoard of http://www.appannie.com/ 
+A java tool to get google play billBoard of http://www.appannie.com/ 
 
 Usage:
 ```java
