@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.snakehero.appannie.ddl.GoogleAnnieApp;
 import com.snakehero.appannie.ddl.type.AnnieTop;
+import com.snakehero.appannie.ddl.type.Country;
 import com.snakehero.appannie.ddl.type.GoogleCategory;
 import com.snakehero.appannie.ddl.type.UserAgent;
 
@@ -159,7 +160,7 @@ public class AnnieService {
 	 * 
 	 * @see ddl.AnnieCountryConfig
 	 */
-	public static String getGoogleTopFirstUrl(String countryName, GoogleCategory category) {
-		return String.format(GOOGLE_TOP_TPL, countryName,category.getTag());
+	public static String getGoogleTopFirstUrl(Country country, GoogleCategory category) {
+		return String.format(GOOGLE_TOP_TPL, country.getCountryName(),category.getTag());
 	}
 }

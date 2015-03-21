@@ -1,5 +1,6 @@
 package com.snakehero.appannie.ddl.type;
 
+
 public enum Country {
 	AUSTRALIA("AU","australia"),
 	CANADA("CA","canada"),
@@ -67,5 +68,15 @@ public enum Country {
 
 	public String getCountryCode() {
 		return countryCode;
+	}
+	
+	public static Country getCountry(String countryCode){
+		Country[] countrys = Country.values();
+		for(Country c:countrys){
+			if(c.getCountryCode().equalsIgnoreCase(countryCode)){
+				return c;
+			}
+		}
+		return null;
 	}
 }

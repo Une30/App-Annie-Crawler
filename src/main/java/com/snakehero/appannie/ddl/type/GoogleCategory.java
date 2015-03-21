@@ -1,5 +1,6 @@
 package com.snakehero.appannie.ddl.type;
 
+
 public enum GoogleCategory {
 	ALL( "1", "overall"),
 	GAME( "2", "game"),
@@ -65,5 +66,13 @@ public enum GoogleCategory {
 		return order;
 	}
 	
-	
+	public static GoogleCategory getCategory(String categoryName){
+		GoogleCategory[] categories = GoogleCategory.values();
+		for(GoogleCategory c:categories){
+			if(c.name().equalsIgnoreCase(categoryName)){
+				return c;
+			}
+		}
+		return null;
+	}
 }

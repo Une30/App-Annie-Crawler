@@ -18,16 +18,10 @@ import com.snakehero.appannie.ddl.type.GoogleCategory;
 import com.snakehero.appannie.service.AnnieService;
 
 /**
- * Help you to get AppAnnie Google BillBoard
- * 
- * @usage
- *   <p>
- *   GoogleAppAnnie annie = new GoogleAppAnnie("IN","game");
- *   <p>
- *   List&lt;AnnieApp&gt; list = annie.getTopFree(100);
+ * Help you to get Google Play App top list from App Annie 
  * 
  * @author dujx
- * @date 2015-3-19
+ * @date 2015-3-20
  */
 public class GoogleAppAnnie {
 	private static Logger testLogger = LoggerFactory.getLogger("test.log");
@@ -41,9 +35,21 @@ public class GoogleAppAnnie {
 	private Document firstDoc;
 	private Document moreDoc;
 
-	private String countryCode;
-	private GoogleCategory annieCategory;
+	private static Country country;
+	private GoogleCategory category;
 
+	public static GoogleAppAnnie build(String countryCode){
+		Country country = Country.getCountry(countryCode);
+		
+		return build(country,GoogleCategory.ALL);
+	}
+	
+	public static GoogleAppAnnie build(String countryCode,String categoryName){
+		Country country = Country.getCountry(countryCode);
+		GoogleCategory category = GoogleCategory.getCategory(categoryName);
+		
+ 		return build(country,category);
+ 	}
 	
 	public static GoogleAppAnnie build(Country annieCountry){
 		return build(annieCountry,GoogleCategory.ALL);
@@ -51,11 +57,9 @@ public class GoogleAppAnnie {
 	
 	public static GoogleAppAnnie build(Country annieCountry,GoogleCategory category){
 		GoogleAppAnnie instance = new GoogleAppAnnie();
-		
-		instance.countryCode = annieCountry.getCountryCode().toUpperCase();
-		String countryName =annieCountry.getCountryName();
-		instance.annieCategory = category;
-		instance.topUrl = AnnieService.getGoogleTopFirstUrl(countryName,category);
+		instance.country = annieCountry;
+		instance.category = category;
+		instance.topUrl = AnnieService.getGoogleTopFirstUrl(instance.country,instance.category);
 		return instance;
 	}
 
@@ -74,13 +78,13 @@ public class GoogleAppAnnie {
 		return appList;
 	}
 	
-	private List<GoogleAnnieApp> getFirst(AnnieTop billBoard,int size) {
-		List<GoogleAnnieApp> appList = firstGet(topUrl, billBoard);
+	private List<GoogleAnnieApp> getFirst(AnnieTop topName,int size) {
+		List<GoogleAnnieApp> appList = firstGet(topUrl, topName);
 		return subBillBoard(appList,size,100);
 	}
 	
-	private List<GoogleAnnieApp> getMore(AnnieTop billBoard,int size) {
-		List<GoogleAnnieApp> appList =  moreGet(moreUrl, billBoard);
+	private List<GoogleAnnieApp> getMore(AnnieTop topName,int size) {
+		List<GoogleAnnieApp> appList =  moreGet(moreUrl, topName);
 		return subBillBoard(appList,size,400);
 	}
 	
@@ -111,7 +115,7 @@ public class GoogleAppAnnie {
 					this.moreUrl = AnnieService.getMoreUrl(doc);
 				}
 				Elements els = doc.select(firstQuery);
-				annieApps = AnnieService.extractAnnieApp(els, billBoard, this.countryCode);
+				annieApps = AnnieService.extractAnnieApp(els, billBoard, this.country.getCountryCode());
 			}
 		} catch (Exception e) {
 			logger.error("extractAnnieApp error", e);
@@ -146,7 +150,7 @@ public class GoogleAppAnnie {
 
 				if (doc != null) {
 					Elements els = doc.select(moreQuery);
-					annieApps = AnnieService.extractAnnieApp(els, billBoard, this.countryCode);
+					annieApps = AnnieService.extractAnnieApp(els, billBoard, this.country.getCountryCode());
 				}
 			} catch (Exception e) {
 				logger.error("extractAnnieApp ajax error", e);
