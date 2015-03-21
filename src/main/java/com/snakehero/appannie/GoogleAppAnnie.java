@@ -11,11 +11,10 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.snakehero.appannie.ddl.AnnieApp;
-import com.snakehero.appannie.ddl.AnnieBillboard;
-import com.snakehero.appannie.ddl.AnnieCategory;
-import com.snakehero.appannie.ddl.AnnieCategoryConfig;
-import com.snakehero.appannie.ddl.AnnieCountryConfig;
+import com.snakehero.appannie.ddl.GoogleAnnieApp;
+import com.snakehero.appannie.ddl.type.AnnieTop;
+import com.snakehero.appannie.ddl.type.Country;
+import com.snakehero.appannie.ddl.type.GoogleCategory;
 import com.snakehero.appannie.service.AnnieService;
 
 /**
@@ -31,6 +30,7 @@ import com.snakehero.appannie.service.AnnieService;
  * @date 2015-3-19
  */
 public class GoogleAppAnnie {
+	private static Logger testLogger = LoggerFactory.getLogger("test.log");
 	private static final Logger logger = LoggerFactory.getLogger(GoogleAppAnnie.class);
 	private final static String firstQuery = "#storestats-top-table tr";
 	public final static String moreQuery = "tr";
@@ -42,23 +42,24 @@ public class GoogleAppAnnie {
 	private Document moreDoc;
 
 	private String countryCode;
-	private AnnieCategory annieCategory;
+	private GoogleCategory annieCategory;
 
 	
-	public static GoogleAppAnnie build(String countryCode){
-		return build(countryCode,"ALL");
+	public static GoogleAppAnnie build(Country annieCountry){
+		return build(annieCountry,GoogleCategory.ALL);
 	}
 	
-	public static GoogleAppAnnie build(String countryCode,String categoryName){
+	public static GoogleAppAnnie build(Country annieCountry,GoogleCategory category){
 		GoogleAppAnnie instance = new GoogleAppAnnie();
-		instance.countryCode = countryCode.toUpperCase();
-		String countryName = AnnieCountryConfig.getCountryNameByCode(countryCode);
-		instance.annieCategory = AnnieCategoryConfig.getCategory(categoryName);
-		instance.topUrl = AnnieService.getGoogleTopFirstUrl(countryName,instance.annieCategory);
+		
+		instance.countryCode = annieCountry.getCountryCode().toUpperCase();
+		String countryName =annieCountry.getCountryName();
+		instance.annieCategory = category;
+		instance.topUrl = AnnieService.getGoogleTopFirstUrl(countryName,category);
 		return instance;
 	}
 
-	private List<AnnieApp> subBillBoard( List<AnnieApp> appList,int size,int maxSize){
+	private List<GoogleAnnieApp> subBillBoard( List<GoogleAnnieApp> appList,int size,int maxSize){
 		if(size < 0 || size > maxSize){
 			size = maxSize;
 		}
@@ -73,23 +74,13 @@ public class GoogleAppAnnie {
 		return appList;
 	}
 	
-	private List<AnnieApp> getNewFreeFirst(int size) {
-		List<AnnieApp> appList = firstGet(topUrl, AnnieBillboard.NEW_FREE);
+	private List<GoogleAnnieApp> getFirst(AnnieTop billBoard,int size) {
+		List<GoogleAnnieApp> appList = firstGet(topUrl, billBoard);
 		return subBillBoard(appList,size,100);
 	}
 	
-	private List<AnnieApp> getNewFreeMore(int size) {
-		List<AnnieApp> appList =  moreGet(moreUrl, AnnieBillboard.NEW_FREE);
-		return subBillBoard(appList,size,400);
-	}
-	
-	private List<AnnieApp> getTopFreeFirst(int size) {
-		List<AnnieApp> appList = firstGet(topUrl, AnnieBillboard.TOP_FREE);
-		return subBillBoard(appList,size,100);
-	}
-	
-	private List<AnnieApp> getTopFreeMore(int size) {
-		List<AnnieApp> appList =  moreGet(moreUrl, AnnieBillboard.TOP_FREE);
+	private List<GoogleAnnieApp> getMore(AnnieTop billBoard,int size) {
+		List<GoogleAnnieApp> appList =  moreGet(moreUrl, billBoard);
 		return subBillBoard(appList,size,400);
 	}
 	
@@ -100,13 +91,14 @@ public class GoogleAppAnnie {
 	 * @param billBoard
 	 * @return list of app
 	 */
-	private List<AnnieApp> firstGet(String url, AnnieBillboard billBoard) {
-		List<AnnieApp> annieApps = new ArrayList<AnnieApp>();
+	private List<GoogleAnnieApp> firstGet(String url, AnnieTop billBoard) {
+		List<GoogleAnnieApp> annieApps = new ArrayList<GoogleAnnieApp>();
 		Document doc = null;
 		try {
 			if (this.firstDoc == null) {
 				String html = AnnieService.httpGet(url,false);
 				if (!StringUtil.isEmpty(html)) {
+					//testLogger.info(html+"\r\n-----------------------------\r\n");
 					doc = Jsoup.parse(html);
 					this.firstDoc = doc;
 				}
@@ -134,14 +126,15 @@ public class GoogleAppAnnie {
 	 * @param billBoard Type of AnnieBillboard
 	 * @return list of app
 	 */
-	private List<AnnieApp> moreGet(String url, AnnieBillboard billBoard) {
-		List<AnnieApp> annieApps = new ArrayList<AnnieApp>();
+	private List<GoogleAnnieApp> moreGet(String url, AnnieTop billBoard) {
+		List<GoogleAnnieApp> annieApps = new ArrayList<GoogleAnnieApp>();
 		if (!StringUtil.isEmpty(url)) {
 			try {
 				Document doc = null;
 				if (this.moreDoc == null) {
 					String html = AnnieService.httpGet(url,true);
 					if (!StringUtil.isEmpty(html)) {
+						//testLogger.info(html);
 						String wrapHtml = "<html><body><table>%s</</body></html>";
 						String _html = String.format(wrapHtml, html);
 						doc = Jsoup.parse(_html);
@@ -163,42 +156,27 @@ public class GoogleAppAnnie {
 		return annieApps;
 	}
 	
-	
-	public List<AnnieApp> getNewFree(int size) {
+	public List<GoogleAnnieApp> getTopList(AnnieTop billboard, int size) {
 		if(size < 0 || size > 500){
 			size = 500;
 		}
 		
 		if(size <= 100){
-			return getNewFreeFirst(size);
+			return getFirst(billboard,size);
 		}else{
-			List<AnnieApp> appList = new ArrayList<AnnieApp>();
-			appList.addAll(getNewFreeFirst(100));
-			appList.addAll(getNewFreeMore(size-100));
+			List<GoogleAnnieApp> appList = new ArrayList<GoogleAnnieApp>();
+			appList.addAll(getFirst(billboard,100));
+			appList.addAll(getMore(billboard,size-100));
 			return appList;
 		}
 	}
 	
-	public List<AnnieApp> getTopFree(int size) {
-		if(size < 0 || size > 500){
-			size = 500;
-		}
-		
-		if(size <= 100){
-			return getTopFreeFirst(size);
-		}else{
-			List<AnnieApp> appList = new ArrayList<AnnieApp>();
-			appList.addAll(getTopFreeFirst(100));
-			appList.addAll(getTopFreeMore(size-100));
-			return appList;
-		}
-	}
 	
 	public static void main(String[] args) {
-		GoogleAppAnnie annie = GoogleAppAnnie.build("IN","app");
-		List<AnnieApp> appList = annie.getNewFree(150);
+		GoogleAppAnnie annie = GoogleAppAnnie.build(Country.CHINA,GoogleCategory.ALL);
+		List<GoogleAnnieApp> appList = annie.getTopList(AnnieTop.FREE, 150);
 		System.out.println(appList.size());
-		for (AnnieApp app : appList) {
+		for (GoogleAnnieApp app : appList) {
 			System.out.println(app.getPackageName());
 		}
 	}

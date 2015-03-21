@@ -1,10 +1,12 @@
 package com.snakehero.appannie.ddl;
 
+import com.snakehero.appannie.ddl.type.AnnieTop;
 
-public class AnnieApp {
+
+public class GoogleAnnieApp {
 	private String title;
 	private String packageName;
-	private AnnieBillboard billBoard;
+	private AnnieTop billBoard;
 	private String countryCode;
 
 	public String getTitle() {
@@ -23,11 +25,11 @@ public class AnnieApp {
 		this.packageName = packageName;
 	}
 
-	public AnnieBillboard getBillBoard() {
+	public AnnieTop getBillBoard() {
 		return billBoard;
 	}
 
-	public void setBillBoard(AnnieBillboard billBoard) {
+	public void setBillBoard(AnnieTop billBoard) {
 		this.billBoard = billBoard;
 	}
 
@@ -41,7 +43,7 @@ public class AnnieApp {
 	
 	@Override
 	public boolean equals(Object obj) {
-		AnnieApp d = (AnnieApp) obj;
+		GoogleAnnieApp d = (GoogleAnnieApp) obj;
 		if (packageName.equals(d.packageName)) {
 			return true;
 		} else {
