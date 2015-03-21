@@ -1,6 +1,6 @@
-# App-Annie-BillBoard
+# App-Annie-Crawler
 
-A java tool to get google play billBoard of http://www.appannie.com/ 
+A java tool to get app list of http://www.appannie.com/ 
 
 Usage:
 ```java
