@@ -30,10 +30,10 @@ public class AnnieService {
 	private final static String GP_NAME_NEW = "gp";
 
 	// if GP_NAME not work ,use GP_NAME_NEW instead by setting useGpNewName=true
-	private static boolean useGpNewName = true;
+	private static boolean useGpNewName = false;
 	private final static String GP = useGpNewName ? GP_NAME_NEW : GP_NAME;
-	private final static String GOOGLE_TOP_TPL = "http://www.appannie.com/apps/" + GP + "/top/%s/%s/";
-	public final static String GOOGLE_TOP_MORE_TPL = "http://www.appannie.com%s?p=2-&h=23&iap=undefined";
+	private final static String GOOGLE_TOP_TPL = "https://www.appannie.com/apps/" + GP + "/top/%s/%s/";
+	public final static String GOOGLE_TOP_MORE_TPL = "https://www.appannie.com%s?p=2-&h=23&iap=undefined";
 	private final static String tdTemplate = "td:nth-child(%d)";
 	private final static String infoQuery = ".main-info .oneline-info a";
 	private final static Pattern packageRegex = Pattern.compile("/apps/(gp|google-play){1}/app/(.*)/");

@@ -16,12 +16,19 @@ import com.snakehero.appannie.ddl.type.AnnieTop;
 import com.snakehero.appannie.ddl.type.Country;
 import com.snakehero.appannie.ddl.type.GoogleCategory;
 import com.snakehero.appannie.service.AnnieService;
+import com.snakehero.appannie.util.HttpsRequest;
 
 /**
- * Help you to get Google Play App top list from App Annie 
+ * Help you to get AppAnnie Google BillBoard
+ * 
+ * @usage
+ *   <p>
+ *   GoogleAppAnnie annie = new GoogleAppAnnie("IN","game");
+ *   <p>
+ *   List&lt;AnnieApp&gt; list = annie.getTopFree(100);
  * 
  * @author dujx
- * @date 2015-3-20
+ * @date 2015-3-19
  */
 public class GoogleAppAnnie {
 	private static Logger testLogger = LoggerFactory.getLogger("test.log");
@@ -136,7 +143,7 @@ public class GoogleAppAnnie {
 			try {
 				Document doc = null;
 				if (this.moreDoc == null) {
-					String html = AnnieService.httpGet(url,true);
+					String html = HttpsRequest.get(url,null, true);
 					if (!StringUtil.isEmpty(html)) {
 						//testLogger.info(html);
 						String wrapHtml = "<html><body><table>%s</</body></html>";
