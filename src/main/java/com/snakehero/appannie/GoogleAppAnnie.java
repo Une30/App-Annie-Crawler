@@ -42,7 +42,7 @@ public class GoogleAppAnnie {
 	private Document firstDoc;
 	private Document moreDoc;
 
-	private static Country country;
+	private Country country;
 	private GoogleCategory category;
 
 	public static GoogleAppAnnie build(String countryCode){
@@ -122,7 +122,7 @@ public class GoogleAppAnnie {
 					this.moreUrl = AnnieService.getMoreUrl(doc);
 				}
 				Elements els = doc.select(firstQuery);
-				annieApps = AnnieService.extractAnnieApp(els, billBoard, this.country.getCountryCode());
+				annieApps = AnnieService.extractAnnieApp(els, billBoard, this.country.getCountryCode(),this.category.getTag(),1);
 			}
 		} catch (Exception e) {
 			logger.error("extractAnnieApp error", e);
@@ -157,7 +157,7 @@ public class GoogleAppAnnie {
 
 				if (doc != null) {
 					Elements els = doc.select(moreQuery);
-					annieApps = AnnieService.extractAnnieApp(els, billBoard, this.country.getCountryCode());
+					annieApps = AnnieService.extractAnnieApp(els, billBoard, this.country.getCountryCode(),this.category.getTag(),101);
 				}
 			} catch (Exception e) {
 				logger.error("extractAnnieApp ajax error", e);
@@ -184,11 +184,11 @@ public class GoogleAppAnnie {
 	
 	
 	public static void main(String[] args) {
-		GoogleAppAnnie annie = GoogleAppAnnie.build(Country.CHINA,GoogleCategory.ALL);
+		GoogleAppAnnie annie = GoogleAppAnnie.build(Country.SAUDI_ARABIA,GoogleCategory.ALL);
 		List<GoogleAnnieApp> appList = annie.getTopList(AnnieTop.FREE, 150);
 		System.out.println(appList.size());
 		for (GoogleAnnieApp app : appList) {
-			System.out.println(app.getPackageName());
+			System.out.println(app);
 		}
 	}
 }

@@ -35,7 +35,7 @@ public class AnnieService {
 	private final static String GOOGLE_TOP_TPL = "https://www.appannie.com/apps/" + GP + "/top/%s/%s/";
 	public final static String GOOGLE_TOP_MORE_TPL = "https://www.appannie.com%s?p=2-&h=23&iap=undefined";
 	private final static String tdTemplate = "td:nth-child(%d)";
-	private final static String infoQuery = ".main-info .oneline-info a";
+	private final static String infoQuery = ".item-info";
 	private final static Pattern packageRegex = Pattern.compile("/apps/(gp|google-play){1}/app/(.*)/");
 	
 	private final static Pattern nextPageRegex = Pattern.compile("pageVal.data_url\\s?=\\s?'(.*)'", Pattern.MULTILINE);
@@ -77,24 +77,43 @@ public class AnnieService {
 	 * 
 	 * @see AnnieTop 
 	 */
-	public static List<GoogleAnnieApp> extractAnnieApp(Elements trEls, AnnieTop billBoard, String countryCode) {
+	public static List<GoogleAnnieApp> extractAnnieApp(Elements trEls, AnnieTop billBoard, String countryCode,String categoryTag,int rankStart) {
 		List<GoogleAnnieApp> annieApps = new ArrayList<GoogleAnnieApp>();
 		if (trEls != null) {
 			try {
 				String tdQuery = String.format(tdTemplate, billBoard.getDBText());
+				int rank = rankStart;
 				for (Element tr : trEls) {
 					Elements tds = tr.select(tdQuery);
 					if (tds != null) {
 						Element td = tds.first();
 						if(td!=null){
-							Element info = td.select(infoQuery).first();
-							String packageName = extractPackageName(info.attr("href"));
-							if (!StringUtil.isEmpty(packageName)) {
+							Elements info = td.select(infoQuery);
+							if(info!=null){
+								// first node:packageName + title
+//								Element titleInfo= info.first();
+								// rank change
+								String rankChange = info.select(".pull-right .var").text();
+								// 
+								Element titleInfo= info.select(".main-info .title-info a").first();
+								// packageName
+								String packageName = extractPackageName(titleInfo.attr("href"));
+//								// title
+								String title = titleInfo.text().trim();
+								
+								Element cpInfo= info.select(".main-info .add-info").first();
+								String cp = cpInfo.text();
+								
 								GoogleAnnieApp app = new GoogleAnnieApp();
+								app.setRankChange(rankChange);
 								app.setPackageName(packageName);
-								app.setTitle(info.text().trim());
+								app.setTitle(title);
+								app.setCp(cp);
+								app.setCategory(categoryTag);
+								app.setRank(rank++);
 								app.setBillBoard(billBoard);
 								app.setCountryCode(countryCode);
+								
 								annieApps.add(app);
 							}
 						}
