@@ -1,15 +1,9 @@
 package com.snakehero.appannie.service;
 
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import jodd.http.HttpRequest;
-import jodd.http.HttpResponse;
-import jodd.http.net.SocketHttpConnection;
-import jodd.util.StringUtil;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -21,7 +15,7 @@ import com.snakehero.appannie.ddl.GoogleAnnieApp;
 import com.snakehero.appannie.ddl.type.AnnieTop;
 import com.snakehero.appannie.ddl.type.Country;
 import com.snakehero.appannie.ddl.type.GoogleCategory;
-import com.snakehero.appannie.ddl.type.UserAgent;
+import com.snakehero.appannie.util.StringUtil;
 
 public class AnnieService {
 	private static final Logger logger = LoggerFactory.getLogger(AnnieService.class);
@@ -40,33 +34,6 @@ public class AnnieService {
 	
 	private final static Pattern nextPageRegex = Pattern.compile("pageVal.data_url\\s?=\\s?'(.*)'", Pattern.MULTILINE);
 
-	/**
-	 * Simple Http request of get method wrapping jodd.http 
-	 * @param url the url need to request
-	 * @param isAjax true if it's a ajax request; Otherwise ,false
-	 * @return response string
-	 */
-	public static String httpGet(String url,boolean isAjax) {
-		String body = null;
-		logger.info("Get "+url);
-		try {
-			HttpRequest request = HttpRequest.get(url).timeout(5000).header("user-agent", UserAgent.getRandomUserAgent());
-			if(isAjax){
-				request.header("X-Requested-With", "XMLHttpRequest");
-			}
-			request.open();
-			SocketHttpConnection httpConnection = (SocketHttpConnection) request.httpConnection();
-			Socket socket = httpConnection.getSocket();
-			socket.setSoTimeout(30000);
-			HttpResponse response = request.send();
-			body = response.bodyText();
-		} catch (Exception e) {
-			logger.error("Get error:"+url,e);
-		}
-
-		return body;
-	}
-	
 	/**
 	 * extract a list of app from tr elements
 	 * 

@@ -3,7 +3,7 @@ package com.snakehero.appannie;
 import java.util.ArrayList;
 import java.util.List;
 
-import jodd.util.StringUtil;
+
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -17,6 +17,8 @@ import com.snakehero.appannie.ddl.type.Country;
 import com.snakehero.appannie.ddl.type.GoogleCategory;
 import com.snakehero.appannie.service.AnnieService;
 import com.snakehero.appannie.util.HttpsRequest;
+import com.snakehero.appannie.util.StringUtil;
+import com.snakehero.console.Csv;
 
 /**
  * Help you to get AppAnnie Google BillBoard
@@ -107,7 +109,7 @@ public class GoogleAppAnnie {
 		Document doc = null;
 		try {
 			if (this.firstDoc == null) {
-				String html = AnnieService.httpGet(url,false);
+				String html = HttpsRequest.get(url, null, false);
 				if (!StringUtil.isEmpty(html)) {
 					//testLogger.info(html+"\r\n-----------------------------\r\n");
 					doc = Jsoup.parse(html);
@@ -185,10 +187,11 @@ public class GoogleAppAnnie {
 	
 	public static void main(String[] args) {
 		GoogleAppAnnie annie = GoogleAppAnnie.build(Country.SAUDI_ARABIA,GoogleCategory.ALL);
-		List<GoogleAnnieApp> appList = annie.getTopList(AnnieTop.FREE, 150);
+		List<GoogleAnnieApp> appList = annie.getTopList(AnnieTop.TOP_FREE, 150);
 		System.out.println(appList.size());
 		for (GoogleAnnieApp app : appList) {
 			System.out.println(app);
 		}
+		Csv.write("d://app.csv", appList);
 	}
 }
