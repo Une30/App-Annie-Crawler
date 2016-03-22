@@ -1,5 +1,10 @@
 package com.snakehero.appannie.ddl.type;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 
 public enum Country {
 	AUSTRALIA("AU","australia"),
@@ -68,6 +73,15 @@ public enum Country {
 
 	public String getCountryCode() {
 		return countryCode;
+	}
+	
+	public static Map<String, String> getMapValues(){
+		List<Country> list = Arrays.asList(Country.values());
+		Map<String,String> map = new TreeMap<String,String>();
+		for(Country country:list){
+			map.put(country.getCountryCode(), country.getCountryName());
+		}
+		return map;
 	}
 	
 	public static Country getCountry(String countryCode){

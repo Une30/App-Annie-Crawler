@@ -11,4 +11,18 @@ public enum AnnieTop {
 	public int getDBText() {
 		return type;
 	}
+	
+	public static AnnieTop getBoard(String name){
+		AnnieTop[] tops = AnnieTop.values();
+		for(AnnieTop c:tops){
+			if(c.toString().equalsIgnoreCase(name)){
+				return c;
+			}
+		}
+		return null;
+	}
+	public static void main(String[] args) {
+		AnnieTop c = getBoard("TOP_FREE");
+		System.out.println(c.getDBText());
+	}
 }

@@ -1,10 +1,10 @@
 package com.snakehero.appannie;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-
-
+import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -16,9 +16,9 @@ import com.snakehero.appannie.ddl.type.AnnieTop;
 import com.snakehero.appannie.ddl.type.Country;
 import com.snakehero.appannie.ddl.type.GoogleCategory;
 import com.snakehero.appannie.service.AnnieService;
+import com.snakehero.appannie.service.LoginService;
 import com.snakehero.appannie.util.HttpsRequest;
 import com.snakehero.appannie.util.StringUtil;
-import com.snakehero.console.Csv;
 
 /**
  * Help you to get AppAnnie Google BillBoard
@@ -46,29 +46,30 @@ public class GoogleAppAnnie {
 
 	private Country country;
 	private GoogleCategory category;
-
+	private String date;//yyyy-MM-dd
+	
 	public static GoogleAppAnnie build(String countryCode){
 		Country country = Country.getCountry(countryCode);
 		
-		return build(country,GoogleCategory.ALL);
+		return build(country,GoogleCategory.ALL,null);
 	}
 	
 	public static GoogleAppAnnie build(String countryCode,String categoryName){
 		Country country = Country.getCountry(countryCode);
 		GoogleCategory category = GoogleCategory.getCategory(categoryName);
-		
- 		return build(country,category);
+ 		return build(country,category,null);
  	}
 	
+	
 	public static GoogleAppAnnie build(Country annieCountry){
-		return build(annieCountry,GoogleCategory.ALL);
+		return build(annieCountry,GoogleCategory.ALL,null);
 	}
 	
-	public static GoogleAppAnnie build(Country annieCountry,GoogleCategory category){
+	public static GoogleAppAnnie build(Country annieCountry,GoogleCategory category,String date){
 		GoogleAppAnnie instance = new GoogleAppAnnie();
 		instance.country = annieCountry;
 		instance.category = category;
-		instance.topUrl = AnnieService.getGoogleTopFirstUrl(instance.country,instance.category);
+		instance.topUrl = AnnieService.getGoogleTopFirstUrl(instance.country,instance.category,date);
 		return instance;
 	}
 
@@ -93,7 +94,7 @@ public class GoogleAppAnnie {
 	}
 	
 	private List<GoogleAnnieApp> getMore(AnnieTop topName,int size) {
-		List<GoogleAnnieApp> appList =  moreGet(moreUrl, topName);
+		List<GoogleAnnieApp> appList =  moreGet(moreUrl, topName,this.topUrl);
 		return subBillBoard(appList,size,400);
 	}
 	
@@ -109,9 +110,12 @@ public class GoogleAppAnnie {
 		Document doc = null;
 		try {
 			if (this.firstDoc == null) {
-				String html = HttpsRequest.get(url, null, false);
+				System.out.println(url);
+				if(!LoginService.isLogin()){
+					LoginService.login();//登陆
+				}
+				String html = HttpsRequest.get(url, null, false,null);
 				if (!StringUtil.isEmpty(html)) {
-					//testLogger.info(html+"\r\n-----------------------------\r\n");
 					doc = Jsoup.parse(html);
 					this.firstDoc = doc;
 				}
@@ -139,13 +143,13 @@ public class GoogleAppAnnie {
 	 * @param billBoard Type of AnnieBillboard
 	 * @return list of app
 	 */
-	private List<GoogleAnnieApp> moreGet(String url, AnnieTop billBoard) {
+	private List<GoogleAnnieApp> moreGet(String url, AnnieTop billBoard,String firstUrl) {
 		List<GoogleAnnieApp> annieApps = new ArrayList<GoogleAnnieApp>();
 		if (!StringUtil.isEmpty(url)) {
 			try {
 				Document doc = null;
 				if (this.moreDoc == null) {
-					String html = HttpsRequest.get(url,null, true);
+					String html = HttpsRequest.get(url,null, true,firstUrl);
 					if (!StringUtil.isEmpty(html)) {
 						//testLogger.info(html);
 						String wrapHtml = "<html><body><table>%s</</body></html>";
@@ -178,20 +182,29 @@ public class GoogleAppAnnie {
 			return getFirst(billboard,size);
 		}else{
 			List<GoogleAnnieApp> appList = new ArrayList<GoogleAnnieApp>();
-			appList.addAll(getFirst(billboard,100));
-			appList.addAll(getMore(billboard,size-100));
+			try{
+				appList.addAll(getFirst(billboard,100));
+			}catch(Exception e){
+				logger.error("getMore error",e);
+			}
+			
+			try{
+				appList.addAll(getMore(billboard,size-100));
+			}catch(Exception e){
+				logger.error("getMore error",e);
+			}
 			return appList;
 		}
 	}
 	
 	
 	public static void main(String[] args) {
-		GoogleAppAnnie annie = GoogleAppAnnie.build(Country.SAUDI_ARABIA,GoogleCategory.ALL);
-		List<GoogleAnnieApp> appList = annie.getTopList(AnnieTop.TOP_FREE, 150);
-		System.out.println(appList.size());
-		for (GoogleAnnieApp app : appList) {
-			System.out.println(app);
-		}
-		Csv.write("d://app.csv", appList);
+			GoogleAppAnnie annie = GoogleAppAnnie.build(Country.SAUDI_ARABIA,GoogleCategory.ALL,"2015-04-26");
+			List<GoogleAnnieApp> appList = annie.getTopList(AnnieTop.NEW_FREE, 100);
+			System.out.println(appList.size());
+			for (GoogleAnnieApp app : appList) {
+				System.out.println(app);
+			}
+		//Csv.write("d://app.csv", appList);
 	}
 }

@@ -4,12 +4,20 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.net.CookieStore;
+import java.net.HttpCookie;
+import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.Map;
 
 import javax.net.ssl.HostnameVerifier;
@@ -34,7 +42,8 @@ public class HttpsRequest {
     // 默认的HTTPS 端口
     static final int HTTPS_PORT = 443;
     static int CONN_TIME_OUT = 10000; //连接超时上限
-    static int READ_TIME_OUT = 10000; //请求超时上限
+    static int READ_TIME_OUT = 20000; //请求超时上限
+    
 
     /**
      * 自定义的证书管理类。
@@ -71,9 +80,9 @@ public class HttpsRequest {
      * @throws UnknownHostException
      * @throws IOException
      */
-    public static String get(String url, String paras,boolean isAjax) throws KeyManagementException, NoSuchAlgorithmException, UnknownHostException, IOException {
+    public static String get(String url, String paras,boolean isAjax,String referer) throws KeyManagementException, NoSuchAlgorithmException, UnknownHostException, IOException {
     	logger.info("~~~https request~~~~~url:{}, params:{}", url, paras);
-    	String result = request(url, paras, false, null, CONN_TIME_OUT, READ_TIME_OUT,isAjax);
+    	String result = request(url, paras, false, null, CONN_TIME_OUT, READ_TIME_OUT,isAjax,referer);
     	//logger.info("~~~https response ~~~~ result:{}", result);
         return result;
     }
@@ -92,9 +101,9 @@ public class HttpsRequest {
      * @throws UnknownHostException
      * @throws IOException
      */
-    public static String get(String url, String paras, String charset,boolean isAjax) throws KeyManagementException, NoSuchAlgorithmException, UnknownHostException, IOException {
+    public static String get(String url, String paras, String charset,boolean isAjax,String referer) throws KeyManagementException, NoSuchAlgorithmException, UnknownHostException, IOException {
 
-        return request(url, paras, false, charset, CONN_TIME_OUT, READ_TIME_OUT,isAjax);
+        return request(url, paras, false, charset, CONN_TIME_OUT, READ_TIME_OUT,isAjax,referer);
     }
 
     /**
@@ -110,8 +119,8 @@ public class HttpsRequest {
      * @throws UnknownHostException
      * @throws IOException
      */
-    public static String post(String url, String paras,boolean isAjax) throws KeyManagementException, NoSuchAlgorithmException, UnknownHostException, IOException {
-        return request(url, paras, true, null, CONN_TIME_OUT, READ_TIME_OUT,isAjax);
+    public static String post(String url, String paras,boolean isAjax,String referer) throws KeyManagementException, NoSuchAlgorithmException, UnknownHostException, IOException {
+        return request(url, paras, true, null, CONN_TIME_OUT, READ_TIME_OUT,isAjax,referer);
     }
 
     /**
@@ -127,11 +136,10 @@ public class HttpsRequest {
      * @throws UnknownHostException
      * @throws IOException
      */
-    public static String post(String url, Map<String, String> paramMap,boolean isAjax) throws KeyManagementException, NoSuchAlgorithmException, UnknownHostException, IOException {
+    public static String post(String url, Map<String, String> paramMap,boolean isAjax,String referer) throws KeyManagementException, NoSuchAlgorithmException, UnknownHostException, IOException {
         String paramStr = ParameterUtil.mapToUrl(paramMap);
         logger.info("https req tid[{}], url[{}], param[{}]", new Object[]{Thread.currentThread().getId(), url, paramStr});
-        String result =  request(url, paramStr, true, null, CONN_TIME_OUT, READ_TIME_OUT,isAjax);
-        //logger.info("https resp tid[{}], result[{}]", new Object[]{Thread.currentThread().getId(), result});
+        String result =  request(url, paramStr, true, null, CONN_TIME_OUT, READ_TIME_OUT,isAjax,referer);
         return result;
     }
 
@@ -147,9 +155,9 @@ public class HttpsRequest {
      * @throws UnknownHostException
      * @throws IOException
      */
-    public static String post(String url, Map<String, String> paras, int connTimeOut, int readTimeOut,boolean isAjax) throws KeyManagementException, NoSuchAlgorithmException, UnknownHostException, IOException {
+    public static String post(String url, Map<String, String> paras, int connTimeOut, int readTimeOut,boolean isAjax,String referer) throws KeyManagementException, NoSuchAlgorithmException, UnknownHostException, IOException {
         String paramStr = ParameterUtil.mapToUrl(paras);
-        return request(url, paramStr, true, null, connTimeOut, readTimeOut,isAjax);
+        return request(url, paramStr, true, null, connTimeOut, readTimeOut,isAjax,referer);
     }
 
     /**
@@ -166,9 +174,11 @@ public class HttpsRequest {
      * @throws UnknownHostException
      * @throws IOException
      */
-    private static String request(String url, String paras, boolean doPost, String charset, int connectTimeOut, int readTimeOut,boolean isAjax) throws KeyManagementException, NoSuchAlgorithmException,
+    private static String request(String url, String paras, boolean doPost, String charset, int connectTimeOut, int readTimeOut,boolean isAjax,String referer) throws KeyManagementException, NoSuchAlgorithmException,
             UnknownHostException, IOException {
-
+    	CookieManager cookieManager = CookieUtil.getCookieManager();
+    	System.setProperty("https.proxyHost", "localhost");
+    	System.setProperty("https.proxyPort", "8888");
         if (!doPost) {
             String linkSymbol = "?";
             if (url.indexOf(linkSymbol) > -1) {
@@ -179,12 +189,39 @@ public class HttpsRequest {
             }
         }
         URL console = new URL(url);
+        cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+        CookieHandler.setDefault(cookieManager);
+        
+//        CookieStore cookieJar =  cookieManager.getCookieStore();
+//        List<HttpCookie> cookies;
+//		try {
+//			cookies = cookieJar.get(console.toURI());
+//			 for (HttpCookie cookie: cookies) {
+//		          System.out.println("CookieHandler retrieved cookie: " + cookie);
+//		        }
+//		} catch (URISyntaxException e) {
+//			e.printStackTrace();
+//		}
+       
+        
+        CookieStore store = cookieManager.getCookieStore();
+        String cookiesStr = "";
+        for(HttpCookie cookie : store.getCookies()) {    	  
+      	  if(!"".equals(cookiesStr)) cookiesStr += "; "; 
+      	  cookiesStr += cookie.getName() +"="+ cookie.getValue();
+        }
+    
         HttpsURLConnection conn = (HttpsURLConnection) console.openConnection();
+        conn.setFollowRedirects(false);
+        conn.setInstanceFollowRedirects(false);
         conn.setConnectTimeout(connectTimeOut);
-        conn.setRequestProperty("User-Agent", UserAgent.getRandomUserAgent());
+        conn.setRequestProperty("Cookie", cookiesStr);
+        conn.setRequestProperty("User-Agent", UserAgent.Chrome.getUa());
         if(isAjax){
-        	conn.setRequestProperty("X-Requested-With", "XMLHttpRequest");;
-        	
+        	conn.setRequestProperty("X-Requested-With", "XMLHttpRequest");
+        }
+        if(referer!=null &&  referer.length()>0){
+        	conn.setRequestProperty("Referer", referer);
         }
         conn.setReadTimeout(readTimeOut);
         if (doPost) {
@@ -196,6 +233,7 @@ public class HttpsRequest {
         SSLContext sc = genSc();
         conn.setSSLSocketFactory(sc.getSocketFactory());
         conn.setHostnameVerifier(new TrustAnyHostnameVerifier());
+
         conn.connect();
         if (doPost) {
             OutputStream os = conn.getOutputStream(); // 输出流，写数据
@@ -220,7 +258,25 @@ public class HttpsRequest {
             br = "\n";
         }
         in.close();
+        
+		boolean redirect = false;
+
+		// normally, 3xx is redirect
+		int status = conn.getResponseCode();
+		if (status != HttpURLConnection.HTTP_OK) {
+			if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM
+					|| status == HttpURLConnection.HTTP_SEE_OTHER)
+				redirect = true;
+		}
+        
+		 if (redirect) {
+				// get redirect url from "location" header field
+				String newUrl = conn.getHeaderField("Location");
+				conn.disconnect();
+				return get(newUrl, null, false,url);
+			}
         conn.disconnect();
+        
         return sb.toString();
 
     }
@@ -239,8 +295,8 @@ public class HttpsRequest {
     }
 
     public static void main(String argv[]) throws Exception {
-        System.out.println(HttpsRequest.get("https://uctest2.ucweb.com/upsw/oapi/queryBalance.htm", "id=a",false));
-        System.out.println(HttpsRequest.post("https://uctest2.ucweb.com/upsw/oapi/queryBalance.htm", "id=a",false));
+        System.out.println(HttpsRequest.get("https://uctest2.ucweb.com/upsw/oapi/queryBalance.htm", "id=a",false,""));
+        System.out.println(HttpsRequest.post("https://uctest2.ucweb.com/upsw/oapi/queryBalance.htm", "id=a",false,""));
 
     }
 }

@@ -27,10 +27,10 @@ public class AnnieService {
 	private static boolean useGpNewName = false;
 	private final static String GP = useGpNewName ? GP_NAME_NEW : GP_NAME;
 	private final static String GOOGLE_TOP_TPL = "https://www.appannie.com/apps/" + GP + "/top/%s/%s/";
-	public final static String GOOGLE_TOP_MORE_TPL = "https://www.appannie.com%s?p=2-&h=23&iap=undefined";
+	public final static String GOOGLE_TOP_MORE_TPL = "https://www.appannie.com%s?p=2-&h=23&iap=";
 	private final static String tdTemplate = "td:nth-child(%d)";
-	private final static String infoQuery = ".item-info";
-	private final static Pattern packageRegex = Pattern.compile("/apps/(gp|google-play){1}/app/(.*)/");
+	private final static String infoQuery = ".app-info";
+	private final static Pattern packageRegex = Pattern.compile("/apps/(gp|google-play){1}/app/(.*?)/details.*");
 	
 	private final static Pattern nextPageRegex = Pattern.compile("pageVal.data_url\\s?=\\s?'(.*)'", Pattern.MULTILINE);
 
@@ -51,7 +51,11 @@ public class AnnieService {
 				String tdQuery = String.format(tdTemplate, billBoard.getDBText());
 				int rank = rankStart;
 				for (Element tr : trEls) {
+					if(tr.select("td").size()==2 && billBoard == AnnieTop.NEW_FREE){//some country only two columns
+						tdQuery = String.format(tdTemplate, 2);
+					}
 					Elements tds = tr.select(tdQuery);
+					
 					if (tds != null) {
 						Element td = tds.first();
 						if(td!=null){
@@ -60,15 +64,16 @@ public class AnnieService {
 								// first node:packageName + title
 //								Element titleInfo= info.first();
 								// rank change
-								String rankChange = info.select(".pull-right .var").text();
+								String rankChange = info.select(".main-info .var-info").text();
 								// 
 								Element titleInfo= info.select(".main-info .title-info a").first();
 								// packageName
-								String packageName = extractPackageName(titleInfo.attr("href"));
+								String packageName =  info.select(".main-info .product-code").text();
+										//extractPackageName(titleInfo.attr("href"));
 //								// title
 								String title = titleInfo.text().trim();
 								
-								Element cpInfo= info.select(".main-info .add-info").first();
+								Element cpInfo= info.select(".company-link").first();
 								String cp = cpInfo.text();
 								
 								GoogleAnnieApp app = new GoogleAnnieApp();
@@ -146,7 +151,17 @@ public class AnnieService {
 	 * 
 	 * @see ddl.AnnieCountryConfig
 	 */
-	public static String getGoogleTopFirstUrl(Country country, GoogleCategory category) {
-		return String.format(GOOGLE_TOP_TPL, country.getCountryName(),category.getTag());
+	public static String getGoogleTopFirstUrl(Country country, GoogleCategory category,String date) {
+		
+		String url = String.format(GOOGLE_TOP_TPL, country.getCountryName(),category.getTag());
+		if (!StringUtil.isEmpty(date) && !date.equalsIgnoreCase("null")) {
+			url +="?date="+date;
+		}
+		return url;
+	}
+	public static void main(String[] args) {
+		String a="/apps/google-play/app/com.fortafygames.colorswitch/details/";
+		String b = extractPackageName(a);
+		System.out.println(b);
 	}
 }
