@@ -188,6 +188,10 @@ public class HttpsRequest {
                 url = url + linkSymbol + paras;
             }
         }
+	if(!url.startsWith("https://www.appannie.com")){
+        	url = "https://www.appannie.com" + url;
+        }
+        System.out.println(url);
         URL console = new URL(url);
         cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
         CookieHandler.setDefault(cookieManager);
