@@ -1,4 +1,5 @@
-package Crawler;
+package com.snakehero.Crawler;
+
 
 import com.snakehero.appannie.service.LoginService;
 import com.snakehero.appannie.util.HttpsRequest;
@@ -38,7 +39,7 @@ public class Crawler_V1 {
   			doc = Jsoup.parse(html);
   		}
      	Elements els = doc.select("div.desc");
-      System.out.println(els.get(0).text());
-   		System.out.println(elm.text());
+        System.out.println(els.get(0).text());
+	}
 	
 }
